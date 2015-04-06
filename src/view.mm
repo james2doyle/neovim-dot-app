@@ -136,7 +136,7 @@
 
 - (void)pasteText
 {
-    if (mInsertMode) {
+    if ([self insertOrProbablyCommandMode]) {
         NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
         NSString* string = [pasteboard stringForType:NSPasteboardTypeString];
         string = [string stringByReplacingOccurrencesOfString:@"<"
@@ -193,7 +193,7 @@
     /* Difference, which can invert, is only present in the 10.10 SDK, so
        use the ugly cursor if the person compiling doesn't have that SDK.
        This is all going away anyway once we get a character buffer. */
-    #if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_10
+    #ifdef __MAC_10_10
 
         if (mInsertMode || y + 1 == mYCells)
             cellRect = CGRectMake(x, y, .2, 1);
@@ -206,7 +206,7 @@
 
     #else
 
-        if (mInsertMode || y + 1 == mYCells)
+        if ([self insertOrProbablyCommandMode])
             cellRect = CGRectMake(x, y, .2, 1);
         else
             cellRect = CGRectMake(x, y+1, 1, .3);
@@ -218,6 +218,13 @@
     #endif
 }
 
+/* Returns TRUE if we are insert mode or if we are probably in command mode. If
+   the cursor is in the bottom row then we are deemed to probably be in command
+   mode. */
+- (BOOL)insertOrProbablyCommandMode
+{
+    return (mInsertMode || mCursorDisplayPos.y + 1 == mYCells);
+}
 
 /* -- Resizing -- */
 
