@@ -17,10 +17,9 @@ http://www.gnu.org/licenses/gpl-3.0.html
 Text editing, mouse support, tabs, clipboard, basic Mac menus, font selection,
 font size adjustments
 
-### Stil to do
+### Still to do
 
-Multi-window support, non-ugly cursor, services integration, dead-keys support,
-drag-and-drop.
+See the [list of issues](https://github.com/rogual/neovim-dot-app/issues).
 
 Pull requests are welcome, and greatly appreciated!
 
@@ -28,6 +27,13 @@ Pull requests are welcome, and greatly appreciated!
 ## Compiling
 
 ### Prerequisites
+
+#### OS and Compiler
+
+* Neovim.app compiles on OS X 10.9 and 10.10.
+* You'll need to install Xcode and its command-line tools.
+* Homebrew isn't required but it's an easy way to install the rest of the 
+  dependencies.
 
 #### SCons
     $ brew install scons
