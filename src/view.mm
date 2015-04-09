@@ -6,6 +6,7 @@
 #import "view.h"
 #import "input.h"
 #import "graphics.h"
+#import "vimutils.h"
 
 @implementation VimView
 
@@ -24,7 +25,7 @@
         /* Pick a color space, and store it as a property so we can set the
            window's color space to be the same one, improving draw speed. */
         mColorSpace = CGColorSpaceCreateWithName(
-            kCGColorSpaceGenericRGB
+            kCGColorSpaceSRGB
         );
 
         /* A CGBitmapContext is basically a mutable buffer of bytes in a given
@@ -46,9 +47,10 @@
 
         /* Load font from saved settings */
         NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-        mFont = [NSFont fontWithName:[defaults stringForKey:@"fontName"]
-                                size:[defaults floatForKey:@"fontSize"]];
-        [mFont retain];
+        NSFont *font = [NSFont fontWithName:[defaults stringForKey:@"fontName"]
+                                       size:[defaults floatForKey:@"fontSize"]];
+        [font retain];
+        [self setFont:font];
 
         mTextAttrs = [[NSMutableDictionary dictionaryWithObjectsAndKeys:
             mForegroundColor, NSForegroundColorAttributeName,
@@ -113,9 +115,29 @@
     mCharSize = [@" " sizeWithAttributes:mTextAttrs];
 }
 
+- (void)setFont:(NSFont *)font
+{
+    [mBoldFont release];
+    [mItalicFont release];
+    [mBoldItalicFont release];
+
+    mFont = font;
+
+    NSFontManager *man = [NSFontManager sharedFontManager];
+
+    mBoldFont = [man convertFont:font toHaveTrait:NSBoldFontMask];
+    mItalicFont = [man convertFont:font toHaveTrait:NSItalicFontMask];
+    mBoldItalicFont = [man convertFont:font
+                           toHaveTrait:NSBoldFontMask | NSItalicFontMask];
+
+    [mBoldFont retain];
+    [mItalicFont retain];
+    [mBoldItalicFont retain];
+}
+
 - (void)changeFont:(id)sender
 {
-    mFont = [sender convertFont:mFont];
+    [self setFont:[sender convertFont:mFont]];
 
     //update user defaults with new font
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -153,15 +175,26 @@
 - (void)pasteText
 {
     if ([self insertOrProbablyCommandMode]) {
-        NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-        NSString* string = [pasteboard stringForType:NSPasteboardTypeString];
-        string = [string stringByReplacingOccurrencesOfString:@"<"
-                                                   withString:@"<lt>"];
-        [self vimInput:[string UTF8String]];
+        with_option(mVim, "paste", [self]() {
+            NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+            NSString* string =
+                [pasteboard stringForType:NSPasteboardTypeString];
+
+            string = [string stringByReplacingOccurrencesOfString:@"<"
+                                                       withString:@"<lt>"];
+            string = [string stringByReplacingOccurrencesOfString:@"\n"
+                                                       withString:@"<CR>"];
+            [self vimInput:[string UTF8String]];
+        });
     }
     else {
         mVim->vim_command("normal! \"+p");
     }
+}
+
+- (void)selectAll
+{
+    mVim->vim_command("normal! ggVG");
 }
 
 - (void)openFile:(NSString *)nsFilename
