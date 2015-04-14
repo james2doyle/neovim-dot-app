@@ -105,13 +105,14 @@ using msgpack::object;
         [bg set];
         NSRectFill(rect);
 
-        // adjust clip rect to reduce artifacts
+        CGPoint origin = rect.origin;
+        float r = rect.origin.x + rect.size.width;
         rect.origin.x = floor(rect.origin.x);
-        rect.size.width = ceil(rect.size.width);
+        rect.size.width = ceil(r - rect.origin.x);
 
         CGContextSaveGState(mCanvasContext);
         CGContextClipToRect(mCanvasContext, rect);
-        [nsrun drawAtPoint:rect.origin withAttributes:mTextAttrs];
+        [nsrun drawAtPoint:origin withAttributes:mTextAttrs];
         CGContextRestoreGState(mCanvasContext);
 
         mCursorPos.x += sz;
